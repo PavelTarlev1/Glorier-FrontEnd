@@ -88,7 +88,10 @@ main{padding-top:28px;}
 .vehicle-panel[open] summary::after{transform:rotate(-135deg); top:10px;}
 .panel + .panel{margin-top:20px;}
 .eyebrow{display:block; font-family:var(--font-mono); font-size:11px; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-faint); margin:0 0 4px;}
+.route-panel-from,.route-panel-to{border-width:1.5px;}
+.route-panel-from{border-color:var(--accent-soft-line);}
 .route-panel-from .eyebrow{color:var(--accent);}
+.route-panel-to{border-color:color-mix(in srgb, var(--amber) 45%, transparent);}
 .route-panel-to .eyebrow{color:var(--amber);}
 .panel h2{font-size:17px; margin-bottom:16px; color:var(--ink);}
 .panel-head{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;}
