@@ -219,9 +219,14 @@ export default function RouteForm({ t, lang, form, setForm, rates, autoPriceAvg 
       </div>
 
       {/* --- Vehicle & transit info --- */}
-      <div className="panel">
-        <p className="eyebrow">{lang === 'bg' ? 'Стъпка 3' : 'Step 3'}</p>
-        <h2>{t('vehicleTitle')}</h2>
+      {/* A <details> element: on desktop it just reads as a normal open panel; on a
+          phone (see the CSS media query) the summary becomes a tappable collapse toggle,
+          so this heavier step-3 section doesn't have to stay expanded taking up the screen. */}
+      <details className="panel vehicle-panel" open>
+        <summary>
+          <span className="eyebrow">{lang === 'bg' ? 'Стъпка 3' : 'Step 3'}</span>
+          <h2>{t('vehicleTitle')}</h2>
+        </summary>
 
         <div className="field">
           <label htmlFor="catSel">{t('vehicle')}</label>
@@ -484,7 +489,7 @@ export default function RouteForm({ t, lang, form, setForm, rates, autoPriceAvg 
         <p className="hint" style={{ textAlign: 'center', marginTop: 14, marginBottom: 0 }}>
           {t('liveCalcNote')}
         </p>
-      </div>
+      </details>
     </>
   );
 }

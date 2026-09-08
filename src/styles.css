@@ -78,8 +78,18 @@ main{padding-top:28px;}
 @media (max-width:860px){ .grid{grid-template-columns:minmax(0,1fr);} }
 
 .panel{background:var(--surface); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); padding:22px;}
+.vehicle-panel summary{cursor:pointer; list-style:none; position:relative; padding-right:24px;}
+.vehicle-panel summary::-webkit-details-marker{display:none;}
+.vehicle-panel summary::after{
+  content:''; position:absolute; right:2px; top:6px; width:9px; height:9px;
+  border:solid var(--ink-faint); border-width:0 1.6px 1.6px 0; transform:rotate(45deg);
+  transition:transform .15s;
+}
+.vehicle-panel[open] summary::after{transform:rotate(-135deg); top:10px;}
 .panel + .panel{margin-top:20px;}
-.eyebrow{font-family:var(--font-mono); font-size:11px; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-faint); margin:0 0 4px;}
+.eyebrow{display:block; font-family:var(--font-mono); font-size:11px; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-faint); margin:0 0 4px;}
+.route-panel-from .eyebrow{color:var(--accent);}
+.route-panel-to .eyebrow{color:var(--amber);}
 .panel h2{font-size:17px; margin-bottom:16px; color:var(--ink);}
 .panel-head{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;}
 
@@ -111,8 +121,8 @@ main{padding-top:28px;}
 fieldset{border:0; padding:0; margin:18px 0 0; border-top:1px solid var(--line); padding-top:16px;}
 fieldset legend{font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint); padding:0; margin-bottom:10px;}
 
-.tag-checks{display:flex; flex-wrap:wrap; gap:8px 16px;}
-.tag-check{display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink-soft); cursor:pointer;}
+.tag-checks{display:flex; flex-wrap:wrap; gap:12px 22px;}
+.tag-check{display:flex; align-items:center; gap:8px; font-size:13px; color:var(--ink-soft); cursor:pointer;}
 .tag-check input{width:15px; height:15px; margin:0; accent-color:var(--accent); cursor:pointer;}
 
 .result-empty{display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:60px 20px; color:var(--ink-faint); gap:12px;}
@@ -122,7 +132,7 @@ fieldset legend{font-size:11px; font-weight:600; letter-spacing:.08em; text-tran
 .flag-chip{font-family:var(--font-mono); font-size:12px; background:var(--surface-2); color:var(--ink-soft); padding:2px 7px; border-radius:5px; letter-spacing:.03em; flex-shrink:0;}
 
 .route-bubbles{display:flex; align-items:center; gap:10px; flex-wrap:wrap; max-width:100%; min-width:0;}
-.route-bubble{border-radius:12px; padding:10px 14px; min-width:0; flex:1 1 140px; border:1px solid transparent; overflow:hidden;}
+.route-bubble{border-radius:12px; padding:10px 14px; min-width:0; flex:1 1 110px; border:1px solid transparent; overflow:hidden;}
 .route-bubble.from{background:var(--accent-soft); border-color:var(--accent-soft-line);}
 .route-bubble.to{background:var(--amber-soft); border-color:color-mix(in srgb, var(--amber) 35%, transparent);}
 .rb-flag{display:block; font-size:24px; line-height:1; margin-bottom:4px;}
@@ -144,10 +154,10 @@ fieldset legend{font-size:11px; font-weight:600; letter-spacing:.08em; text-tran
 .stat .label{font-size:11px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px; display:flex; align-items:center; gap:6px;}
 .manual-badge{font-size:9.5px; font-weight:700; padding:1px 6px; border-radius:20px; background:var(--amber-soft); color:var(--amber); text-transform:uppercase; letter-spacing:.03em;}
 .bridge-note{color:var(--amber); margin-top:2px;}
-.stat .value{font-family:var(--font-mono); font-size:22px; font-weight:600; color:var(--ink); font-variant-numeric:tabular-nums;}
+.stat .value{font-family:var(--font-mono); font-size:22px; font-weight:600; color:var(--ink); font-variant-numeric:tabular-nums; overflow-wrap:break-word;}
 .stat .value small{font-size:13px; font-weight:500; color:var(--ink-soft); margin-left:3px;}
 .stat.price{background:var(--accent-soft); border-color:var(--accent-soft-line);}
-.stat.price .value{color:var(--accent); font-size:26px;}
+.stat.price .value{color:var(--accent); font-size:22px;}
 .stat.price .label{color:var(--accent);}
 
 .range-bar-wrap{margin-top:20px;}
