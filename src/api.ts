@@ -1,7 +1,11 @@
 // Thin fetch wrappers around the Navlo backend API.
 import type { RatesData, Calculation, NewCalculationInput } from './types';
 
-const BASE = '/api';
+// Relative '/api' works when the frontend and backend share an origin (local
+// dev via the Vite proxy, or a single combined deploy). When they're deployed
+// separately (e.g. a static frontend host + a standalone backend on Fly.io),
+// set VITE_API_BASE at build time to the backend's full URL.
+const BASE = `${import.meta.env.VITE_API_BASE || ''}/api`;
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(BASE + path, {
