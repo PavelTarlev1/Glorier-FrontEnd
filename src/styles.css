@@ -175,6 +175,7 @@ fieldset legend{font-size:11px; font-weight:600; letter-spacing:.08em; text-tran
 .tag-badges{display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;}
 
 .actions-row{display:flex; gap:10px; margin-top:18px; flex-wrap:wrap;}
+.save-error{margin:10px 0 0; font-size:12.5px; color:var(--danger, #C0392B);}
 .btn-secondary{border:1px solid var(--line-strong); background:var(--surface); color:var(--ink); border-radius:9px; padding:9px 15px; font-size:13px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:7px;}
 .btn-secondary:hover{background:var(--surface-2);}
 .btn-secondary:disabled{opacity:.6; cursor:default;}

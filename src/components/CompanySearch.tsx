@@ -40,10 +40,7 @@ export default function CompanySearch({ t, lang, rates }: CompanySearchProps) {
   return (
     <div className="panel">
       <p className="eyebrow">{lang === 'bg' ? 'Търсене' : 'Search'}</p>
-      <h2>{t('companySearchTitle')}</h2>
-      <p className="hint" style={{ marginBottom: 12 }}>
-        {t('companySearchSub', { N: rates.total_records })}
-      </p>
+      <h2 style={{ marginBottom: 12 }}>{t('companySearchTitle')}</h2>
       <input
         className="search-input"
         value={query}

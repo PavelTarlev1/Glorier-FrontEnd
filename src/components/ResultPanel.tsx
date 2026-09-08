@@ -28,9 +28,10 @@ interface ResultPanelProps {
   result: EstimateResult | null;
   onSave: () => void;
   saving: boolean;
+  saveError?: string | null;
 }
 
-export default function ResultPanel({ t, lang, result, onSave, saving }: ResultPanelProps) {
+export default function ResultPanel({ t, lang, result, onSave, saving, saveError }: ResultPanelProps) {
   const [copied, setCopied] = useState(false);
 
   if (!result) {
@@ -287,6 +288,7 @@ export default function ResultPanel({ t, lang, result, onSave, saving }: ResultP
           <SaveIcon /> {saving ? t('savingBtn') : t('saveBtn')}
         </button>
       </div>
+      {saveError && <p className="save-error">{saveError}</p>}
     </div>
   );
 }

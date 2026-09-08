@@ -8,7 +8,7 @@ import Header, { type ThemeMode } from './components/Header';
 import RouteForm from './components/RouteForm';
 import ResultPanel from './components/ResultPanel';
 import HistoryTable from './components/HistoryTable';
-import SavedList from './components/SavedList';
+// import SavedList from './components/SavedList'; // temporarily unused — see the History-panel note below
 import CompanySearch from './components/CompanySearch';
 import HowItWorksModal from './components/HowItWorksModal';
 import type { Lang, FormState, RatesData, Calculation } from './types';
@@ -107,6 +107,7 @@ export default function App() {
 
   const [form, setForm] = useState<FormState>(initialForm);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // The country-centroid distance model can't tell two cities in the same country
   // apart (it's 0 for a country against itself) — for a domestic route, geocode
@@ -160,6 +161,7 @@ export default function App() {
   const handleSave = async () => {
     if (!result) return;
     setSaving(true);
+    setSaveError(null);
     try {
       const saved = await api.createCalculation({
         lc: result.lc,
@@ -200,6 +202,7 @@ export default function App() {
       setCalculations((c) => [saved, ...c]);
     } catch (e) {
       console.error(e);
+      setSaveError(e instanceof Error ? e.message : 'Failed to save');
     } finally {
       setSaving(false);
     }
@@ -245,6 +248,11 @@ export default function App() {
       serviceTags: c.service_tags ? c.service_tags.split(',').filter(Boolean) : [],
     });
   };
+  // Kept defined (not deleted) for when the History panel comes back — see the
+  // note by <SavedList/> below. Referenced here only so unused-locals doesn't flag them.
+  void handleDeleteCalc;
+  void handleReuseCalc;
+  void calculations;
 
   if (!loaded) return null;
 
@@ -259,10 +267,12 @@ export default function App() {
               <div className="grid">
                 <div className="col-left">
                   <RouteForm t={t} lang={lang} form={form} setForm={setForm} rates={rates} autoPriceAvg={result?.autoPriceAvg} />
-                  <SavedList t={t} lang={lang} calculations={calculations} onDelete={handleDeleteCalc} onReuse={handleReuseCalc} />
+                  {/* История temporarily hidden — saving is disabled server-side right now
+                      (DISABLE_DB_WRITES), so a panel that only ever shows "nothing saved yet"
+                      isn't useful. Re-add <SavedList .../> here once writes are back on. */}
                 </div>
                 <div className="col-right">
-                  <ResultPanel t={t} lang={lang} result={result} onSave={handleSave} saving={saving} />
+                  <ResultPanel t={t} lang={lang} result={result} onSave={handleSave} saving={saving} saveError={saveError} />
                   {result && <HistoryTable t={t} lang={lang} rates={rates} result={result} />}
                 </div>
               </div>
