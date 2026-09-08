@@ -60,7 +60,7 @@ export const SERVICE_TAG_LABELS: Record<ServiceTagKey, { en: string; bg: string 
  *  (stacked when combined, e.g. "Директна доставка, Експресен транспорт" — a
  *  real combination in the TMS data). Measured directly from the TMS export —
  *  median €/km for shipments carrying each tag, versus the overall median
- *  (783 usable records): none 0.98×, express 1.01×, direct delivery 1.08×,
+ *  (782 usable records): none 0.98×, express 1.01×, direct delivery 1.08×,
  *  standard FTL 1.06×, groupage 0.60×. Express turned out to carry almost no
  *  real premium despite the assumption it would — groupage's discount is far
  *  larger than a guess would suggest (shared truck, lower cost per shipment). */
