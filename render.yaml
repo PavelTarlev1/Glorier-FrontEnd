@@ -1,0 +1,19 @@
+# Render.com blueprint — no payment method required for the free plan.
+# Setup (one-time, in the Render dashboard, AFTER the backend is deployed):
+#   1. Update the VITE_API_BASE value below to the real backend URL Render
+#      gave you (e.g. https://navlo-backend.onrender.com), commit + push.
+#   2. New + -> Blueprint -> connect the PavelTarlev1/Glorier-FrontEnd repo.
+#   3. Deploy. Render assigns a URL like https://navlo-frontend.onrender.com
+#      — that's the link to share/test.
+#
+# Static sites on Render's free plan don't spin down the way web services do
+# (no cold start) — only the backend has that tradeoff.
+services:
+  - type: web
+    name: navlo-frontend
+    runtime: static
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_BASE
+        value: https://navlo-backend.onrender.com
