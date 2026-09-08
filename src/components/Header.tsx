@@ -1,7 +1,7 @@
-import { Logo, SunIcon, MoonIcon, MonitorIcon } from '../icons';
+import { Logo, SunIcon, MoonIcon } from '../icons';
 import type { Lang, TFunc } from '../types';
 
-export type ThemeMode = 'system' | 'light' | 'dark';
+export type ThemeMode = 'light' | 'dark';
 
 interface HeaderProps {
   t: TFunc;
@@ -34,9 +34,6 @@ export default function Header({ t, lang, setLang, theme, setTheme, onHow }: Hea
           </button>
           <button className={theme === 'dark' ? 'active' : ''} title={t('themeDark')} onClick={() => setTheme('dark')}>
             <MoonIcon />
-          </button>
-          <button className={theme === 'system' ? 'active' : ''} title={t('themeSystem')} onClick={() => setTheme('system')}>
-            <MonitorIcon />
           </button>
         </div>
 

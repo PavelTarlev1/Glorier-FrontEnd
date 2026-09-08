@@ -101,7 +101,6 @@ const STR: Record<string, StrEntry> = {
   how: { en: 'How it works', bg: 'Как работи' },
   themeLight: { en: 'Light theme', bg: 'Светла тема' },
   themeDark: { en: 'Dark theme', bg: 'Тъмна тема' },
-  themeSystem: { en: 'Match system', bg: 'Както системата' },
   navCalc: { en: 'Calculator', bg: 'Калкулатор' },
   formTitle: { en: 'Route', bg: 'Маршрут' },
   fromTitle: { en: 'From', bg: 'От къде' },

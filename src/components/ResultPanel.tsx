@@ -21,9 +21,6 @@ function fmtDateTime(iso: string, hhmm: string, lang: Lang): string {
   if (date === '—' || !hhmm) return date;
   return `${date}, ${hhmm}`;
 }
-function cap(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
 
 interface ResultPanelProps {
   t: TFunc;
@@ -105,10 +102,6 @@ export default function ResultPanel({ t, lang, result, onSave, saving }: ResultP
             {result.companyUnloading && <p className="rb-company">{result.companyUnloading}</p>}
           </div>
         </div>
-        <span className={`confidence ${result.confidence}`}>
-          <span className="dot"></span>
-          {t('conf' + cap(result.confidence))}
-        </span>
       </div>
 
       <RouteMap result={result} />

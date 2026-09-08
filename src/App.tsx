@@ -25,9 +25,13 @@ function readStoredLang(): Lang {
 function readStoredTheme(): ThemeMode {
   try {
     const v = localStorage.getItem('navlo_theme');
-    return v === 'light' || v === 'dark' ? v : 'system';
+    if (v === 'light' || v === 'dark') return v;
+    // No explicit choice saved (first visit, or a leftover "system" value from
+    // before that option was removed) — pick once from the OS preference as a
+    // sensible starting point; it's a fixed choice from here, not live-following.
+    return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   } catch {
-    return 'system';
+    return 'light';
   }
 }
 
@@ -93,8 +97,7 @@ export default function App() {
     }
   };
   useEffect(() => {
-    if (theme === 'system') document.documentElement.removeAttribute('data-theme');
-    else document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
   const [rates, setRates] = useState<RatesData | null>(null);
