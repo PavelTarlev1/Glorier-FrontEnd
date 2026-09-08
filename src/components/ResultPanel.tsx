@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { COUNTRIES, SERVICE_TAG_LABELS, flagEmoji } from '../i18n';
-import { EmptyIcon, CopyIcon, SaveIcon, CheckIcon, ArrowIcon } from '../icons';
+import { EmptyIcon, CopyIcon, SaveIcon, CheckIcon, ArrowIcon, EditIcon, RevertIcon } from '../icons';
 import RouteMap from './RouteMap';
-import type { Lang, TFunc, EstimateResult } from '../types';
+import type { Lang, TFunc, EstimateResult, FormState } from '../types';
 
 function fmt(n: number, lang: Lang): string {
   return Math.round(n).toLocaleString(lang === 'bg' ? 'bg-BG' : 'en-GB') + ' €';
@@ -26,13 +26,19 @@ interface ResultPanelProps {
   t: TFunc;
   lang: Lang;
   result: EstimateResult | null;
+  form: FormState;
+  setForm: (updater: (f: FormState) => FormState) => void;
   onSave: () => void;
   saving: boolean;
   saveError?: string | null;
 }
 
-export default function ResultPanel({ t, lang, result, onSave, saving, saveError }: ResultPanelProps) {
+export default function ResultPanel({ t, lang, result, form, setForm, onSave, saving, saveError }: ResultPanelProps) {
   const [copied, setCopied] = useState(false);
+  // Distance and €/km are editable via an explicit edit button, not a
+  // click-anywhere input — the total price is deliberately not editable at
+  // all: it's always derived from distance × rate (or the rate override).
+  const [editingField, setEditingField] = useState<'distance' | 'rate' | null>(null);
 
   if (!result) {
     return (
@@ -65,7 +71,7 @@ export default function ResultPanel({ t, lang, result, onSave, saving, saveError
       `${t('shippedLabel')}: ${fmtDateTime(result.shipDate, result.shipTime, lang)}  →  ${t('arrivalLabel')}: ${fmtDateTime(result.arrivalDate, result.arrivalTime, lang)}\n` +
       `${t('distance')}: ${fmtKm(result.distance, lang)}\n` +
       `${t('estPrice')}: ${fmt(result.priceAvg, lang)} (${fmt(result.priceLo, lang)}–${fmt(result.priceHi, lang)})\n` +
-      `${t('pricePerKm')}: ${result.rate.avg.toFixed(2)} €/km`;
+      `${t('pricePerKm')}: ${result.effectivePricePerKm.toFixed(2)} €/km`;
     if (result.total !== result.priceAvg) text += `\n${t('lineTotal')}: ${fmt(result.total, lang)}`;
     navigator.clipboard?.writeText(text).then(() => {
       setCopied(true);
@@ -112,15 +118,87 @@ export default function ResultPanel({ t, lang, result, onSave, saving, saveError
           <div className="label">
             {t('distance')}
             {result.isManualDistance && <span className="manual-badge">{t('manualBadge')}</span>}
+            {!result.isManualDistance && result.isRoadDistance && <span className="road-badge">{t('roadBadge')}</span>}
           </div>
-          <div className="value">{fmtKm(result.distance, lang)}</div>
+          {editingField === 'distance' ? (
+            <div className="value-edit">
+              <input
+                type="number"
+                min="0"
+                step="10"
+                autoFocus
+                className="stat-input"
+                value={form.manualDistanceKm}
+                placeholder={String(Math.round(result.autoDistance))}
+                onChange={(e) => setForm((f) => ({ ...f, manualDistanceKm: e.target.value }))}
+                onBlur={() => setEditingField(null)}
+                onKeyDown={(e) => e.key === 'Enter' && setEditingField(null)}
+              />
+              <small>km</small>
+              {result.isManualDistance && (
+                <button type="button" className="edit-btn" onClick={() => setForm((f) => ({ ...f, manualDistanceKm: '' }))} aria-label={t('revertBtn')} title={t('revertBtn')}>
+                  <RevertIcon />
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="value-display">
+              <div className="value">{fmtKm(result.distance, lang)}</div>
+              {result.isManualDistance && (
+                <button type="button" className="edit-btn" onClick={() => setForm((f) => ({ ...f, manualDistanceKm: '' }))} aria-label={t('revertBtn')} title={t('revertBtn')}>
+                  <RevertIcon />
+                </button>
+              )}
+              <button type="button" className="edit-btn" onClick={() => setEditingField('distance')} aria-label={t('editBtn')}>
+                <EditIcon />
+              </button>
+            </div>
+          )}
+          {(editingField === 'distance' || result.isManualDistance) && <p className="stat-model">{t('statModel', { V: fmtKm(result.autoDistance, lang) })}</p>}
         </div>
         <div className="stat">
-          <div className="label">{t('pricePerKm')}</div>
-          <div className="value">
-            {result.rate.avg.toFixed(2)}
-            <small>€/km</small>
+          <div className="label">
+            {t('pricePerKm')}
+            {result.isManualPrice && <span className="manual-badge">{t('manualBadge')}</span>}
           </div>
+          {editingField === 'rate' ? (
+            <div className="value-edit">
+              <input
+                type="number"
+                min="0"
+                step="0.05"
+                autoFocus
+                className="stat-input"
+                value={form.manualPricePerKm}
+                placeholder={result.rate.avg.toFixed(2)}
+                onChange={(e) => setForm((f) => ({ ...f, manualPricePerKm: e.target.value }))}
+                onBlur={() => setEditingField(null)}
+                onKeyDown={(e) => e.key === 'Enter' && setEditingField(null)}
+              />
+              <small>€/km</small>
+              {result.isManualPrice && (
+                <button type="button" className="edit-btn" onClick={() => setForm((f) => ({ ...f, manualPricePerKm: '' }))} aria-label={t('revertBtn')} title={t('revertBtn')}>
+                  <RevertIcon />
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="value-display">
+              <div className="value">
+                {result.effectivePricePerKm.toFixed(2)}
+                <small>€/km</small>
+              </div>
+              {result.isManualPrice && (
+                <button type="button" className="edit-btn" onClick={() => setForm((f) => ({ ...f, manualPricePerKm: '' }))} aria-label={t('revertBtn')} title={t('revertBtn')}>
+                  <RevertIcon />
+                </button>
+              )}
+              <button type="button" className="edit-btn" onClick={() => setEditingField('rate')} aria-label={t('editBtn')}>
+                <EditIcon />
+              </button>
+            </div>
+          )}
+          {(editingField === 'rate' || result.isManualPrice) && <p className="stat-model">{t('statModel', { V: `${result.rate.avg.toFixed(2)} €/km` })}</p>}
         </div>
         <div className="stat price">
           <div className="label">

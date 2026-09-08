@@ -47,7 +47,7 @@ export const CAPITALS: Record<string, string> = {
 
 export const CAT_ORDER = ['7.5T', '12T', '16T', '18T', '18T2D', '26T', '26T2D', '40T'] as const;
 
-/** "Доп. инфо" service tags, straight from the real TMS export's values (combinable). */
+/** "Доп. инфо" service tags, straight from the TMS export's values (combinable). */
 export const SERVICE_TAGS = ['directDelivery', 'express', 'standardFtl', 'groupage'] as const;
 export type ServiceTagKey = (typeof SERVICE_TAGS)[number];
 export const SERVICE_TAG_LABELS: Record<ServiceTagKey, { en: string; bg: string }> = {
@@ -128,11 +128,16 @@ const STR: Record<string, StrEntry> = {
   transitSold: { en: 'Subcontracted / brokered', bg: 'Продаден (подизпълнител)' },
   serviceTagsLabel: { en: 'Service (optional)', bg: 'Услуга (по избор)' },
   tailLift: { en: 'Tail lift required', bg: 'Падащ борд' },
-  serviceTagsPriceHint: { en: 'Effect on freight price (measured from real data): __PCT__%', bg: 'Ефект върху навлото (измерено от реални данни): __PCT__%' },
+  serviceTagsPriceHint: { en: 'Effect on freight price (measured from the provided data): __PCT__%', bg: 'Ефект върху навлото (измерено от предоставените данни): __PCT__%' },
   shipDate: { en: 'Loading date', bg: 'Дата на товарене' },
   shipTime: { en: 'Loading time', bg: 'Час на товарене' },
+  manualEditHint: {
+    en: 'Distance and €/km have an edit button on the stat cards above — total price is always calculated from them, not editable directly.',
+    bg: 'Разстоянието и цена/км имат бутон за редакция в блоковете горе — общата цена винаги се изчислява от тях, не се редактира директно.',
+  },
   manualDistance: { en: 'Distance override (km, optional)', bg: 'Ръчно разстояние (км, по избор)' },
   manualBadge: { en: 'manual', bg: 'ръчно' },
+  roadBadge: { en: 'road', bg: 'път' },
   manualDistanceHint: { en: 'auto-calculated: __N__ km — leave empty to use it', bg: 'автоматично изчислено: __N__ км — остави празно за да го ползваш' },
   manualPrice: { en: '"Навло" override (EUR, optional)', bg: 'Ръчно навло (EUR, по избор)' },
   manualPriceHint: {
@@ -140,6 +145,19 @@ const STR: Record<string, StrEntry> = {
     bg: 'изчислено от модела: __N__ EUR — ставката е медиана и по природа е приблизителна за конкретен превоз; въведи реалната позната цена тук, за да я ползваш вместо това',
   },
   manualPriceHintNoModel: { en: 'no model estimate available for this route/category yet', bg: 'все още няма изчислена ставка за тази релация/категория' },
+  manualRate: { en: '"Цена/км" override (EUR/km, optional)', bg: 'Ръчна цена/км (EUR/км, по избор)' },
+  manualRateHint: {
+    en: 'model rate: __N__ EUR/km — enter the real known rate here to use it instead',
+    bg: 'ставка от модела: __N__ EUR/км — въведи реалната позната ставка тук, за да я ползваш вместо това',
+  },
+  statModel: { en: 'model: __V__', bg: 'модел: __V__' },
+  editBtn: { en: 'Edit', bg: 'Редактирай' },
+  revertBtn: { en: 'Revert to model estimate', bg: 'Върни към оценката на модела' },
+  rateIgnored: { en: 'ignored — total price above is set', bg: 'игнорира се — общата цена по-горе е зададена' },
+  manualRateHintOverridden: {
+    en: 'ignored while "Ръчно навло" above is set — that total takes precedence',
+    bg: 'игнорира се, докато "Ръчно навло" по-горе е зададено — общата сума има предимство',
+  },
   extrasLegend: { en: 'Optional extras', bg: 'Допълнителни (по избор)' },
   emptyKm: { en: 'Empty km before loading', bg: 'Празни километри преди товарене' },
   deviationKm: { en: 'Route deviation (km)', bg: 'Отклонение от пътя (км)' },
@@ -148,8 +166,8 @@ const STR: Record<string, StrEntry> = {
   extraCostHint: { en: 'e.g. waiting time, ADR, pallets', bg: 'напр. престой, ADR, палети' },
   tollCost: { en: 'Toll / highway taxes (EUR)', bg: 'Пътни такси / винетки (EUR)' },
   tollHint: {
-    en: 'Not pre-filled — "Навло" already reflects typical toll costs from real historical prices. Fill this in only for a toll beyond that norm (~__N__ EUR/national rate, for reference)',
-    bg: 'Не се попълва автоматично — "Навло" вече отразява типичните пътни такси от реални исторически цени. Попълни само за такса извън обичайното (~__N__ EUR/национална ставка, за ориентир)',
+    en: 'Not pre-filled — "Навло" already reflects typical toll costs from the provided historical prices. Fill this in only for a toll beyond that norm (~__N__ EUR/national rate, for reference)',
+    bg: 'Не се попълва автоматично — "Навло" вече отразява типичните пътни такси от предоставените исторически цени. Попълни само за такса извън обичайното (~__N__ EUR/национална ставка, за ориентир)',
   },
   bridgeCost: { en: 'Bridges / tunnels (EUR)', bg: 'Мостове / тунели (EUR)' },
   ferryCost: { en: 'Ferry ticket (EUR)', bg: 'Билет за ферибот (EUR)' },
@@ -167,8 +185,8 @@ const STR: Record<string, StrEntry> = {
   ferryWeightHint: { en: 'Heavier loads carry a ferry weight surcharge: +15% over 10,000 kg, +30% over 24,000 kg', bg: 'По-тежките товари носят надбавка на ферибота: +15% над 10 000 кг, +30% над 24 000 кг' },
   customsCost: { en: 'Customs clearance (EUR)', bg: 'Митническо оформяне (EUR)' },
   customsHintCrosses: {
-    en: 'Route crosses an EU customs border — typically already reflected in "Навло" for real relations like this; fill in only for clearance costs beyond that (~__N__ EUR, for reference; not duty/VAT)',
-    bg: 'Релацията пресича митническа граница на ЕС — обичайно вече е отразено в "Навло" за реални релации като тази; попълни само за разходи извън обичайното (~__N__ EUR, за ориентир; не мито/ДДС)',
+    en: 'Route crosses an EU customs border — typically already reflected in "Навло" for a route like this; fill in only for clearance costs beyond that (~__N__ EUR, for reference; not duty/VAT)',
+    bg: 'Релацията пресича митническа граница на ЕС — обичайно вече е отразено в "Навло" за релация като тази; попълни само за разходи извън обичайното (~__N__ EUR, за ориентир; не мито/ДДС)',
   },
   customsHintNone: { en: 'No customs border on this route (EU↔EU or domestic)', bg: 'Няма митническа граница по тази релация (ЕС↔ЕС или вътрешна)' },
   calcBtn: { en: 'Calculate', bg: 'Изчисли' },
@@ -183,8 +201,8 @@ const STR: Record<string, StrEntry> = {
   confHigh: { en: 'High confidence', bg: 'Висока сигурност' },
   confMedium: { en: 'Medium confidence', bg: 'Средна сигурност' },
   confLow: { en: 'Low confidence', bg: 'Ниска сигурност' },
-  srcRouteCat: { en: 'based on __N__ past shipments on this exact route with this vehicle category', bg: 'базирано на __N__ реални превоза по тази релация с тази категория' },
-  srcRoute: { en: 'based on __N__ past shipments on this route (all vehicle categories)', bg: 'базирано на __N__ реални превоза по тази релация (всички категории)' },
+  srcRouteCat: { en: 'based on __N__ past shipments on this exact route with this vehicle category', bg: 'базирано на __N__ превоза по тази релация с тази категория' },
+  srcRoute: { en: 'based on __N__ past shipments on this route (all vehicle categories)', bg: 'базирано на __N__ превоза по тази релация (всички категории)' },
   srcCat: { en: 'no data for this route yet — based on __N__ shipments for this vehicle category, all routes', bg: 'няма данни за тази релация — базирано на __N__ превоза за тази категория, всички релации' },
   srcOverall: { en: 'no matching data — based on the overall average of __N__ shipments', bg: 'няма съвпадащи данни — базирано на общата средна стойност от __N__ превоза' },
 
@@ -237,7 +255,7 @@ const STR: Record<string, StrEntry> = {
   savedCompanyLabel: { en: 'Companies', bg: 'Фирми' },
 
   companySearchTitle: { en: 'Search past shipments', bg: 'Търсене в минали превози' },
-  companySearchSub: { en: 'Find what was shipped with a company, or all past loads on a route — searches __N__ real historical records plus your team’s saved quotes.', bg: 'Намери какво е превозвано с дадена фирма, или всички минали товари по релация — търси в __N__ реални исторически записа плюс запазените оферти на екипа.' },
+  companySearchSub: { en: 'Find what was shipped with a company, or all past loads on a route — searches __N__ historical records plus your team’s saved quotes.', bg: 'Намери какво е превозвано с дадена фирма, или всички минали товари по релация — търси в __N__ исторически записа плюс запазените оферти на екипа.' },
   companySearchPh: { en: 'Company, city, country code or category…', bg: 'Фирма, град, код на държава или категория…' },
   companySearchHistTab: { en: 'Historical shipments (__N__)', bg: 'Исторически превози (__N__)' },
   companySearchSavedTab: { en: 'Saved quotes (__N__)', bg: 'Запазени оферти (__N__)' },
@@ -251,17 +269,23 @@ const STR: Record<string, StrEntry> = {
   offline: { en: 'Can’t reach the server — is the backend running?', bg: 'Няма връзка със сървъра — стартиран ли е бекендът?' },
 
   modalTitle: { en: 'How Navlo works', bg: 'Как работи Navlo' },
-  modalP1: { en: 'Navlo estimates road-freight prices from real historical shipment data, so spedition and sales teams can quote routes in seconds instead of digging through spreadsheets.', bg: 'Navlo оценява цени за автомобилен транспорт на база реални исторически данни за превози, за да могат спедитори и търговци да калкулират релации за секунди, вместо да ровят в таблици.' },
+  modalP1: { en: 'Navlo estimates road-freight prices from the historical shipment data provided for this task, so spedition and sales teams can quote routes in seconds instead of digging through spreadsheets.', bg: 'Navlo оценява цени за автомобилен транспорт на база предоставените за задачата исторически данни за превози, за да могат спедитори и търговци да калкулират релации за секунди, вместо да ровят в таблици.' },
   modalH1: { en: '1. Distance', bg: '1. Разстояние' },
-  modalP2: { en: 'Calculated from country centroids using the great-circle distance, scaled by ×1.25 to approximate real road routing.', bg: 'Изчислява се от географските центрове на държавите по права линия (haversine), умножено по ×1.25, за да се доближи до реален път по пътната мрежа.' },
+  modalP2: {
+    en: 'Uses the real road-routed distance (the same routing shown on the map below) whenever it loads successfully; falls back to a straight-line estimate between country centroids (×1.25, to approximate real road routing) only while that’s still loading, or for a route it can’t road-route (e.g. across a sea gap).',
+    bg: 'Използва реалното разстояние по пътната мрежа (същият маршрут, показан на картата по-долу), когато се зареди успешно; пада към приблизителна права линия между географските центрове на държавите (×1.25, за доближаване до реален път), само докато то се зарежда, или за релация, която не може да бъде маршрутизирана по път (напр. през морски участък).',
+  },
   modalH2: { en: '2. Price / km', bg: '2. Цена / км' },
-  modalP3: { en: 'Navlo looks up the median €/km from past shipments, trying the most specific match first: exact route + vehicle category → route only → vehicle category only → overall average. The confidence badge tells you which level was used.', bg: 'Navlo търси медианната €/км от минали превози, като първо пробва най-точното съвпадение: релация + категория → само релация → само категория → обща средна стойност. Индикаторът за сигурност показва кое ниво е използвано.' },
+  modalP3: { en: 'Navlo looks up the median €/km from past shipments, trying the most specific match first: exact route + vehicle category → route only → vehicle category only → overall average. The breakdown below the price shows how many matching records that figure is based on.', bg: 'Navlo търси медианната €/км от минали превози, като първо пробва най-точното съвпадение: релация + категория → само релация → само категория → обща средна стойност. Текстът под цената показва на колко съвпадащи записа се основава числото.' },
   modalH3: { en: '3. Range, not a point', bg: '3. Диапазон, не точка' },
   modalP4: { en: 'The low–high range shown is the 20th–80th percentile of comparable historical prices, so you see realistic bounds rather than false precision.', bg: 'Показаният диапазон ниска-висока е 20-ти до 80-ти персентил на сравними исторически цени, за да видите реалистични граници, а не фалшива точност.' },
-  modalH4: { en: '4. Fleet + saved calculations', bg: '4. Автопарк + запазени изчисления' },
-  modalP5: { en: 'Truck status and saved calculations are stored on the backend (SQLite), shared live across everyone using the tool — update a truck’s status and your colleagues see it immediately.', bg: 'Статусът на камионите и запазените изчисления се съхраняват на бекенда (SQLite) и се споделят в реално време между всички, които ползват инструмента — обновите ли статус на камион, колегите го виждат веднага.' },
+  modalH4: { en: '4. Editable results', bg: '4. Редактируеми резултати' },
+  modalP5: {
+    en: 'Distance, €/km and total price can be edited directly on the result cards — click a number to override it with a known real figure, and the model’s own estimate stays visible underneath for comparison. Saved calculations are shared across the whole team on the backend, not kept per-browser.',
+    bg: 'Разстоянието, цена/км и общата цена могат да се редактират директно в резултатните карти — кликни върху число, за да го замениш с реална позната стойност; оценката на модела остава видима отдолу за сравнение. Запазените изчисления се споделят между целия екип на бекенда, не се пазят само в браузъра.',
+  },
   modalH5: { en: '5. Data source', bg: '5. Източник на данни' },
-  modalP6: { en: 'All figures come from an anonymized export of __N__ completed shipments. No client, company or driver names are used.', bg: 'Всички стойности идват от анонимизиран експорт на __N__ завършени превоза. Не се използват имена на клиенти, фирми или шофьори.' },
+  modalP6: { en: 'All figures come from the anonymized dataset provided for this task (__N__ records). No client, company or driver names are used.', bg: 'Всички стойности идват от анонимизирания набор от данни, предоставен за задачата (__N__ записа). Не се използват имена на клиенти, фирми или шофьори.' },
 };
 
 export function makeT(lang: Lang) {

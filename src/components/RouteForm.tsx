@@ -15,12 +15,9 @@ interface RouteFormProps {
   form: FormState;
   setForm: (updater: (f: FormState) => FormState) => void;
   rates: RatesData;
-  /** The modeled "Навло" (distance × rate) for the current inputs, before any manual
-   *  override — shown next to the override field so the model's own number stays visible. */
-  autoPriceAvg?: number;
 }
 
-export default function RouteForm({ t, lang, form, setForm, rates, autoPriceAvg }: RouteFormProps) {
+export default function RouteForm({ t, lang, form, setForm, rates }: RouteFormProps) {
   const codes = Object.keys(COUNTRIES).sort((a, b) => COUNTRIES[a][lang].localeCompare(COUNTRIES[b][lang]));
 
   const update = (patch: Partial<FormState>) => setForm((f) => ({ ...f, ...patch }));
@@ -303,33 +300,7 @@ export default function RouteForm({ t, lang, form, setForm, rates, autoPriceAvg 
           </select>
         </div>
 
-        <div className="field">
-          <label htmlFor="manualDistanceInp">{t('manualDistance')}</label>
-          <input
-            type="number"
-            min="0"
-            step="10"
-            id="manualDistanceInp"
-            value={form.manualDistanceKm}
-            placeholder={String(distanceKm(form.loading, form.unloading))}
-            onChange={(e) => update({ manualDistanceKm: e.target.value })}
-          />
-          <p className="hint">{t('manualDistanceHint', { N: distanceKm(form.loading, form.unloading) })}</p>
-        </div>
-
-        <div className="field">
-          <label htmlFor="manualPriceInp">{t('manualPrice')}</label>
-          <input
-            type="number"
-            min="0"
-            step="10"
-            id="manualPriceInp"
-            value={form.manualPriceAvg}
-            placeholder={autoPriceAvg ? String(Math.round(autoPriceAvg)) : '0'}
-            onChange={(e) => update({ manualPriceAvg: e.target.value })}
-          />
-          <p className="hint">{autoPriceAvg ? t('manualPriceHint', { N: Math.round(autoPriceAvg) }) : t('manualPriceHintNoModel')}</p>
-        </div>
+        <p className="hint" style={{ marginTop: -6, marginBottom: 14 }}>{t('manualEditHint')}</p>
 
         <fieldset>
           <legend>{t('extrasLegend')}</legend>

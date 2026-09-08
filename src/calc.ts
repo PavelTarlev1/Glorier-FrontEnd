@@ -208,15 +208,21 @@ export interface EstimateInput {
   /** Manual override for the route distance (km) — replaces the auto country-centroid
    *  estimate when set (non-empty, > 0); `deviationKm` still adds on top of it. */
   manualDistanceKm?: string | number;
-  /** Real geocoded city-to-city distance (km), only meaningful when `loading === unloading`
-   *  (a domestic route) — the country-centroid model can't tell two cities in the same
-   *  country apart, so this takes over instead of the flat placeholder when it's known. */
-  domesticCityKm?: number;
+  /** Real road-routed distance (km) from OSRM — the same routing the map draws, kept
+   *  here instead of only using it for the polyline. Used instead of the haversine×1.25
+   *  straight-line approximation whenever it's available; not used for ferry-required
+   *  routes (OSRM can't route across a sea gap), where the approximation stays in effect. */
+  roadDistanceKm?: number;
   /** Manual override for "Навло" (distance × rate) — replaces the modeled freight price
    *  when set (non-empty, > 0), e.g. when a known real quote should be used as-is instead
    *  of the median-based model, which can be 20-50%+ off any single real route (wide
    *  variance is inherent to a flat-rate model — see the price range shown alongside it). */
   manualPriceAvg?: string | number;
+  /** Manual override for the €/km rate itself — replaces `rate.avg` when set (and
+   *  `manualPriceAvg` isn't also set, which takes precedence as the more direct figure).
+   *  priceAvg becomes distance × this rate, with no service-tag multiplier on top —
+   *  same reasoning as manualPriceAvg: a known real rate should win over the model. */
+  manualPricePerKm?: string | number;
   cityLoading?: string;
   cityUnloading?: string;
   postLoading?: string;
@@ -271,7 +277,8 @@ export function estimate(
     serviceTags = [],
     manualDistanceKm,
     manualPriceAvg,
-    domesticCityKm,
+    manualPricePerKm,
+    roadDistanceKm,
     cityLoading = '',
     cityUnloading = '',
     postLoading = '',
@@ -283,8 +290,13 @@ export function estimate(
     shipTime = '08:00',
   }: EstimateInput
 ): EstimateResult {
-  const autoDistance =
-    loading === unloading && domesticCityKm && domesticCityKm > 0 ? domesticCityKm : distanceKm(loading, unloading);
+  // roadDistanceKm comes from OSRM (real road routing, the same source the map
+  // uses) — it naturally comes back null/unset for a route OSRM can't drive
+  // end to end (e.g. across a sea gap it doesn't know about), so the fallback
+  // straight-line×1.25 approximation only kicks in when there's genuinely no
+  // real routed distance yet (still loading) or available at all.
+  const isRoadDistance = !!roadDistanceKm && roadDistanceKm > 0;
+  const autoDistance = isRoadDistance ? roadDistanceKm! : distanceKm(loading, unloading);
   const manualOverride = parseFloat(String(manualDistanceKm));
   const isManualDistance = manualOverride > 0;
   const baseDistance = isManualDistance ? manualOverride : autoDistance;
@@ -319,7 +331,7 @@ export function estimate(
   else if (level === 'routeCat' || (level === 'route' && rate.n >= 5)) confidence = 'medium';
 
   // Service tags shift price from the base route/category rate — multiplier per
-  // tag is measured from the real TMS data (see SERVICE_TAG_PRICE_MULT), not guessed.
+  // tag is measured from the provided TMS data (see SERVICE_TAG_PRICE_MULT), not guessed.
   // Tail lift adds its own measured +8% on top when required.
   const serviceMult = serviceTags.reduce((m, key) => m * (SERVICE_TAG_PRICE_MULT[key as ServiceTagKey] ?? 1), 1) * (tailLift ? TAIL_LIFT_PRICE_MULT : 1);
   const autoPriceAvg = distance * rate.avg * serviceMult;
@@ -329,8 +341,14 @@ export function estimate(
   // the middle of a wide spread (see priceLo/priceHi). When the real quoted price for
   // this exact shipment is known, it should win outright rather than the model guessing.
   const manualPriceOverride = parseFloat(String(manualPriceAvg));
-  const isManualPrice = manualPriceOverride > 0;
-  const priceAvg = isManualPrice ? manualPriceOverride : autoPriceAvg;
+  const isManualPriceTotal = manualPriceOverride > 0;
+  const manualRateOverride = parseFloat(String(manualPricePerKm));
+  const isManualRate = !isManualPriceTotal && manualRateOverride > 0;
+  const isManualPrice = isManualPriceTotal || isManualRate;
+  const priceAvg = isManualPriceTotal ? manualPriceOverride : isManualRate ? distance * manualRateOverride : autoPriceAvg;
+  // The €/km stat should reflect whatever price is actually in effect — including
+  // a manual override — not silently keep showing the model's rate once overridden.
+  const effectivePricePerKm = distance > 0 ? priceAvg / distance : rate.avg;
 
   const empty = parseFloat(String(emptyKm)) || 0;
   const emptyCost = empty > 0 ? empty * rate.avg * 0.5 : 0;
@@ -373,6 +391,7 @@ export function estimate(
     baseDistance,
     autoDistance,
     isManualDistance,
+    isRoadDistance,
     deviationKm: deviation,
     rate,
     level,
@@ -382,6 +401,7 @@ export function estimate(
     priceAvg,
     priceLo,
     priceHi,
+    effectivePricePerKm,
     emptyKm: empty,
     emptyCost,
     extraCost: extra,
@@ -420,7 +440,7 @@ function monthSortKey(month: string | null): string {
   return `${yyyy}-${mm}`;
 }
 
-/** "What has this company shipped with us before?" — searches the real historical
+/** "What has this company shipped with us before?" — searches the historical
  *  TMS records (not just saved calculator quotes) by company name, route code or
  *  vehicle category, most recent first. */
 export function searchHistory(rates: RatesData, query: string): HistoryRow[] {

@@ -26,13 +26,24 @@ export default function CompanySearch({ t, lang, rates }: CompanySearchProps) {
       setSavedResults([]);
       return;
     }
+    let cancelled = false;
     const handle = setTimeout(() => {
       api
         .getCalculations(q)
-        .then(setSavedResults)
-        .catch(() => setSavedResults([]));
+        .then((rows) => {
+          // Guards against an out-of-order response: if the query changed again
+          // before this one's request came back, an older response arriving
+          // late must not overwrite the results for what's now on screen.
+          if (!cancelled) setSavedResults(rows);
+        })
+        .catch(() => {
+          if (!cancelled) setSavedResults([]);
+        });
     }, 250);
-    return () => clearTimeout(handle);
+    return () => {
+      cancelled = true;
+      clearTimeout(handle);
+    };
   }, [query]);
 
   const hasQuery = query.trim().length > 0;

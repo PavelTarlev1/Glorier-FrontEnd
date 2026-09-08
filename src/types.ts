@@ -31,7 +31,7 @@ export interface RatesData {
   cat_info: Record<string, CatInfo>;
   total_records: number;
   history: HistoryRow[];
-  /** Known cities per country code, drawn from real shipment records — feeds the
+  /** Known cities per country code, drawn from the provided shipment records — feeds the
    *  city pickers' suggestion list. Not exhaustive: any city can still be typed. */
   cities: Record<string, string[]>;
   /** Known postal codes per country code, same source and purpose as `cities`. */
@@ -152,6 +152,9 @@ export interface EstimateResult {
   autoDistance: number;
   /** Whether `baseDistance` came from a manual override rather than the auto estimate. */
   isManualDistance: boolean;
+  /** Whether `autoDistance` is a real OSRM road-routed distance rather than the
+   *  haversine×1.25 straight-line approximation (still loading, or not road-routable). */
+  isRoadDistance: boolean;
   /** Extra km for stops/detours off the direct route — added to `distance`, so it
    *  scales the freight price and driving-time estimate like real extra driving. */
   deviationKm: number;
@@ -166,6 +169,9 @@ export interface EstimateResult {
   priceAvg: number;
   priceLo: number;
   priceHi: number;
+  /** priceAvg / distance — the €/km actually in effect, including a manual override
+   *  (unlike `rate.avg`, which always stays the model's own rate for comparison). */
+  effectivePricePerKm: number;
   emptyKm: number;
   emptyCost: number;
   extraCost: number;
@@ -234,10 +240,13 @@ export interface FormState {
   /** Overrides "Навло" (distance × rate) with a known real freight price — the modeled
    *  figure is still shown alongside it for comparison, never silently replaced. */
   manualPriceAvg: string;
+  /** Overrides the €/km rate itself instead of the total — ignored if manualPriceAvg is
+   *  also set (the total takes precedence as the more direct figure). */
+  manualPricePerKm: string;
   /** Cargo weight (kg), optional — only shown/used when a ferry crossing applies, to scale its weight surcharge. */
   weightKg: string;
   /** "Падащ борд" (tail lift) — the one real value seen in the TMS export's "Сертификат" column. */
   tailLift: boolean;
-  /** "Доп. инфо" service tags — combinable, straight from the real TMS values (e.g. "Директна доставка, Експресен транспорт"). */
+  /** "Доп. инфо" service tags — combinable, straight from the TMS export's values (e.g. "Директна доставка, Експресен транспорт"). */
   serviceTags: string[];
 }

@@ -76,6 +76,12 @@ export default function RouteMap({ result }: RouteMapProps) {
     if (origin.lat === dest.lat && origin.lon === dest.lon) return;
 
     const controller = new AbortController();
+    // A cancelled (aborted) fetch rejects too — without this guard its .catch
+    // could still call setFailed(true) after a newer route's effect run has
+    // already reset state, flashing the straight-line fallback for a frame.
+    const failIfNotAborted = () => {
+      if (!controller.signal.aborted) setFailed(true);
+    };
 
     if (result.ferry && ports) {
       Promise.all([fetchRoute(origin, ports.from, controller.signal), fetchRoute(ports.to, dest, controller.signal)])
@@ -84,7 +90,7 @@ export default function RouteMap({ result }: RouteMapProps) {
           if (fromPort) setLegFromPort(fromPort);
           if (!toPort || !fromPort) setFailed(true);
         })
-        .catch(() => setFailed(true));
+        .catch(failIfNotAborted);
     } else if (result.ferry) {
       setFailed(true); // ferry with no known port pair — straight fallback
     } else {
@@ -93,7 +99,7 @@ export default function RouteMap({ result }: RouteMapProps) {
           if (coords) setSingleRoute(coords);
           else setFailed(true);
         })
-        .catch(() => setFailed(true));
+        .catch(failIfNotAborted);
     }
 
     return () => controller.abort();

@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { makeT, CAPITALS } from './i18n';
 import { api } from './api';
-import { estimate, todayIso, chargeItemsFrom, pointDistanceKm } from './calc';
+import { estimate, todayIso, chargeItemsFrom } from './calc';
 import { resolveCity } from './geocode';
+import { fetchRoadDistanceKm } from './routing';
 import { bridgeTollLabel } from './tollRates';
 import Header, { type ThemeMode } from './components/Header';
 import RouteForm from './components/RouteForm';
@@ -55,6 +56,7 @@ function initialForm(): FormState {
     deviationKm: '',
     manualDistanceKm: '',
     manualPriceAvg: '',
+    manualPricePerKm: '',
     weightKg: '',
     tailLift: false,
     serviceTags: [],
@@ -109,20 +111,31 @@ export default function App() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  // The country-centroid distance model can't tell two cities in the same country
-  // apart (it's 0 for a country against itself) — for a domestic route, geocode
-  // both picked cities instead and use the real distance between them.
-  const [domesticCityKm, setDomesticCityKm] = useState(0);
+  // Real road-routed distance (OSRM, the same source the map draws its route
+  // from) — geocode both picked cities, then fetch the actual driving distance
+  // between them. Replaces the haversine×1.25 straight-line approximation in
+  // the price model whenever it resolves; falls back to that approximation
+  // while this is still loading, or for a route OSRM can't road-route at all
+  // (e.g. across a sea gap — it naturally comes back null there).
+  const [roadDistanceKm, setRoadDistanceKm] = useState(0);
   useEffect(() => {
-    const isDomestic = form.loading && form.loading === form.unloading;
-    if (!isDomestic || !form.cityLoading || !form.cityUnloading || form.cityLoading === form.cityUnloading) {
-      setDomesticCityKm(0);
+    if (!form.cityLoading || !form.cityUnloading) {
+      setRoadDistanceKm(0);
+      return;
+    }
+    if (form.loading === form.unloading && form.cityLoading === form.cityUnloading) {
+      setRoadDistanceKm(0); // same point picked on both sides — nothing to route
       return;
     }
     let cancelled = false;
-    Promise.all([resolveCity(form.cityLoading, form.loading), resolveCity(form.cityUnloading, form.unloading)]).then(([a, b]) => {
+    Promise.all([resolveCity(form.cityLoading, form.loading), resolveCity(form.cityUnloading, form.unloading)]).then(async ([a, b]) => {
       if (cancelled) return;
-      setDomesticCityKm(a && b ? pointDistanceKm(a, b) : 0);
+      if (!a || !b) {
+        setRoadDistanceKm(0);
+        return;
+      }
+      const km = await fetchRoadDistanceKm(a, b);
+      if (!cancelled) setRoadDistanceKm(km || 0);
     });
     return () => {
       cancelled = true;
@@ -155,8 +168,8 @@ export default function App() {
     if (!rates) return null;
     const bridgeCost = form.bridgeItems.reduce((s, it) => s + (parseFloat(it.amount) || 0), 0);
     const ferryCost = form.ferryItems.reduce((s, it) => s + (parseFloat(it.amount) || 0), 0);
-    return estimate(rates, { ...form, bridgeCost, ferryCost, bridgeItems: form.bridgeItems, ferryItems: form.ferryItems, domesticCityKm });
-  }, [rates, form, domesticCityKm]);
+    return estimate(rates, { ...form, bridgeCost, ferryCost, bridgeItems: form.bridgeItems, ferryItems: form.ferryItems, roadDistanceKm });
+  }, [rates, form, roadDistanceKm]);
 
   const handleSave = async () => {
     if (!result) return;
@@ -236,6 +249,7 @@ export default function App() {
       deviationKm: c.deviation_km ? String(c.deviation_km) : '',
       manualDistanceKm: c.manual_distance_km ? String(c.manual_distance_km) : '',
       manualPriceAvg: c.manual_price_avg ? String(c.manual_price_avg) : '',
+      manualPricePerKm: '',
       extraCost: c.extra_cost ? String(c.extra_cost) : '',
       tollCost: c.toll_cost ? String(c.toll_cost) : '',
       // The backend only persists a flat total (no per-crossing breakdown), so a
@@ -266,13 +280,13 @@ export default function App() {
             <>
               <div className="grid">
                 <div className="col-left">
-                  <RouteForm t={t} lang={lang} form={form} setForm={setForm} rates={rates} autoPriceAvg={result?.autoPriceAvg} />
+                  <RouteForm t={t} lang={lang} form={form} setForm={setForm} rates={rates} />
                   {/* История temporarily hidden — saving is disabled server-side right now
                       (DISABLE_DB_WRITES), so a panel that only ever shows "nothing saved yet"
                       isn't useful. Re-add <SavedList .../> here once writes are back on. */}
                 </div>
                 <div className="col-right">
-                  <ResultPanel t={t} lang={lang} result={result} onSave={handleSave} saving={saving} saveError={saveError} />
+                  <ResultPanel t={t} lang={lang} result={result} form={form} setForm={setForm} onSave={handleSave} saving={saving} saveError={saveError} />
                   {result && <HistoryTable t={t} lang={lang} rates={rates} result={result} />}
                 </div>
               </div>
